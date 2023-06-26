@@ -81,8 +81,10 @@ static long GetMaxRssMB();
 static void display_banner(std::ostream&);
 static void Checks(const int ti, const double norm, int &checks);
 
+__attribute__((annotate("@critical_path()")))
 int main(int argc, char *argv[])
 {
+	cout << "HI" << endl;
    // Initialize MPI.
    Mpi::Init();
    int myid = Mpi::WorldRank();
@@ -861,6 +863,7 @@ int main(int argc, char *argv[])
    return 0;
 }
 
+
 double rho0(const Vector &x)
 {
    switch (problem)
@@ -1044,6 +1047,7 @@ double e0(const Vector &x)
    }
 }
 
+__attribute__((annotate("@critical_path(pointcut='around_async')")))
 static void display_banner(std::ostream &os)
 {
    os << endl
