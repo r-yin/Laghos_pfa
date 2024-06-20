@@ -84,13 +84,22 @@ ifeq (,$(filter $(GOALS),$(MAKECMDGOALS)))
    endif
 endif
 
-CXX = $(MFEM_CXX)
+CXX=OMPI_CXX=clang++ mpicxx 
+#CXX=mpicxx 
+#CXX = $(MFEM_CXX)
+CFLAGS = -Wall -Wextra 
+MORE_CFLAGS = -Xclang -load -Xclang /g/g91/yin7/PerfFlowAspect/src/c/test_install/lib64/libWeavePass.so -fPIC
+
 CPPFLAGS = $(MFEM_CPPFLAGS)
 CXXFLAGS = $(MFEM_CXXFLAGS)
 LAGHOS_FLAGS = $(CPPFLAGS) $(CXXFLAGS) $(MFEM_INCFLAGS)
 # Extra include dir, needed for now to include headers like "general/forall.hpp"
 EXTRA_INC_DIR = $(or $(wildcard $(MFEM_DIR)/include/mfem),$(MFEM_DIR))
 CCC = $(strip $(CXX) $(LAGHOS_FLAGS) $(if $(EXTRA_INC_DIR),-I$(EXTRA_INC_DIR)))
+
+PERFFLOW_DEPS := -L/g/g91/yin7/PerfFlowAspect/src/c/test_install/lib64 -lperfflow_runtime -lcrypto 
+
+MPI_INC = -I/usr/tce/packages/spectrum-mpi/ibm/spectrum-mpi-2020.08.19/include -I/usr/tce/packages/spectrum-mpi/ibm/spectrum-mpi-rolling-release/include
 
 LAGHOS_LIBS = $(MFEM_LIBS) $(MFEM_EXT_LIBS)
 LIBS = $(strip $(LAGHOS_LIBS) $(LDFLAGS))
@@ -106,11 +115,11 @@ OBJECT_FILES = $(SOURCE_FILES:.cpp=.o)
 
 .SUFFIXES: .cpp .o
 .cpp.o:
-	cd $(<D); $(CCC) -c $(<F)
+	cd $(<D); $(CCC) -c $(<F) $(MPI_INC) $(MORE_CFLAGS) 
 
 laghos: $(OBJECT_FILES) $(CONFIG_MK) $(MFEM_LIB_FILE)
-	$(MFEM_CXX) $(MFEM_LINK_FLAGS) -o laghos $(OBJECT_FILES) $(LIBS)
-
+	$(CXX) $(CFLAGS) $(MFEM_LINK_FLAGS) -o laghos $(OBJECT_FILES) $(LIBS) $(PERFFLOW_DEPS)
+ 
 all:;@$(MAKE) -j $(NPROC) laghos
 
 $(OBJECT_FILES): $(HEADER_FILES) $(CONFIG_MK)
